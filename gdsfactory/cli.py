@@ -14,7 +14,6 @@ from gdsfactory.config import print_version_plugins
 from gdsfactory.difftest import diff
 from gdsfactory.install import install_gdsdiff, install_klayout_package
 from gdsfactory.read.from_updk import from_updk
-from gdsfactory.typings import PathType
 from gdsfactory.watch import watch as _watch
 
 app = typer.Typer()
@@ -45,9 +44,7 @@ def layermap_to_dataclass(
 
 
 @app.command()
-def write_cells(
-    gdspath: PathType, dirpath: PathType = "", recursively: bool = True
-) -> None:
+def write_cells(gdspath: str, dirpath: str = "", recursively: bool = True) -> None:
     """Write each all level cells into separate GDS files."""
     from gdsfactory.write_cells import write_cells as write_cells_top_cells
     from gdsfactory.write_cells import write_cells_recursively
@@ -59,23 +56,21 @@ def write_cells(
 
 
 @app.command()
-def merge_gds(dirpath: PathType = "", gdspath: PathType = "") -> None:
+def merge_gds(dirpath: str = "", gdspath: str = "") -> None:
     """Merges GDS cells from a directory into a single GDS."""
     from gdsfactory.read.from_gdspaths import from_gdsdir
 
-    dirpath = dirpath or pathlib.Path.cwd()
-    gdspath = gdspath or pathlib.Path.cwd() / "merged.gds"
+    dirpath = dirpath or str(pathlib.Path.cwd())
+    gdspath = gdspath or str(pathlib.Path.cwd() / "merged.gds")
 
-    dirpath = pathlib.Path(dirpath)
-
-    c = from_gdsdir(dirpath=dirpath)
+    c = from_gdsdir(dirpath=pathlib.Path(dirpath))
     c.write_gds(gdspath=gdspath)
     c.show()
 
 
 @app.command()
 def watch(
-    path: PathType = pathlib.Path.cwd(),
+    path: str = str(pathlib.Path.cwd()),
     pdk: str = typer.Option(None, "--pdk", "-pdk", help="PDK name"),
     run_main: bool = typer.Option(False, "--run-main", "-rm", help="Run main"),
     run_cells: bool = typer.Option(False, "--run-cells", "-rc", help="Run cells"),
@@ -96,13 +91,15 @@ def watch(
         pre_run: build all cells on startup.
         overwrite: overwrite existing cells.
     """
-    path = pathlib.Path(path)
-    path = path if path.is_dir() else path.parent
+    path_p = pathlib.Path(path)
+    path_p = path_p if path_p.is_dir() else path_p.parent
     if overwrite:
         from gdsfactory import CONF
 
         CONF.cell_overwrite_existing = True
-    _watch(str(path), pdk=pdk, run_main=run_main, run_cells=run_cells, pre_run=pre_run)
+    _watch(
+        str(path_p), pdk=pdk, run_main=run_main, run_cells=run_cells, pre_run=pre_run
+    )
 
 
 @app.command()
@@ -136,15 +133,15 @@ def print_plugins() -> None:
 
 
 @app.command(name="from-updk")
-def from_updk_command(filepath: PathType, filepath_out: PathType = "") -> None:
+def from_updk_command(filepath: str, filepath_out: str = "") -> None:
     """Writes a PDK in python from uPDK YAML spec."""
-    filepath = pathlib.Path(filepath)
-    filepath_out = filepath_out or filepath.with_suffix(".py")
-    from_updk(filepath, filepath_out=filepath_out)
+    filepath_p = pathlib.Path(filepath)
+    filepath_out_p = filepath_out_p or filepath_p.with_suffix(".py")
+    from_updk(filepath_p, filepath_out=filepath_out_p)
 
 
 @app.command()
-def text_from_pdf(filepath: PathType) -> None:
+def text_from_pdf(filepath: str) -> None:
     """Converts a PDF to text."""
     import pdftotext  # type: ignore
 
@@ -153,9 +150,9 @@ def text_from_pdf(filepath: PathType) -> None:
 
     # Read all the text into one string
     text = "\n".join(pdf)  # type: ignore
-    filepath = pathlib.Path(filepath)
-    f = filepath.with_suffix(".md")
-    f.write_text(text)
+    filepath_p = pathlib.Path(filepath)
+    filepath_out_p = filepath_p.with_suffix(".md")
+    filepath_out_p.write_text(text)
 
 
 @app.command()
